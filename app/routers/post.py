@@ -1,5 +1,7 @@
 
 from typing import Optional
+
+from sqlalchemy import func
 from .. import oauth2
 from .. import models, schema
 from fastapi import FastAPI, Response, status, HTTPException, Depends, APIRouter
@@ -18,12 +20,17 @@ def testpost(db: Session = Depends(get_db)):
     return {"status": test_db}
 
 
-@router.get("/", response_model=list[schema.Post])
+@router.get("/", response_model=list[schema.PostOut])
 def get_posts(db: Session = Depends(get_db), currentuser: int =  Depends(oauth2.getcurrentuser),
                limitposts : int = 10, search: Optional[str] = ""):
 
     test_db = db.query(models.POST).filter(models.POST.title.contains(search)).limit(limitposts).all()
-    return test_db
+
+    results = db.query(models.POST, func.count(models.Votes.post_id).label("votes")).join(
+        models.Votes, models.Votes.post_id == models.POST.id, isouter=True).group_by(models.POST.id).filter(
+            models.POST.title.contains(search)).limit(limitposts).all()
+    
+    return results
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schema.Post)
 def create_post(post: schema.PostCreate, db: Session = Depends(get_db), currentuser: int =  Depends(oauth2.getcurrentuser)):
@@ -39,9 +46,13 @@ def create_post(post: schema.PostCreate, db: Session = Depends(get_db), currentu
     return new_post_1
 
 
-@router.get("/{id}", response_model=schema.Post)
+@router.get("/{id}", response_model=schema.PostOut)
 def get_post(id: int, db: Session = Depends(get_db), currentuser: int =  Depends(oauth2.getcurrentuser)):
-    post = db.query(models.POST).filter(models.POST.id == id).first()
+    # post = db.query(models.POST).filter(models.POST.id == id).first()
+
+    post = db.query(models.POST, func.count(models.Votes.post_id).label("votes")).join(
+        models.Votes, models.Votes.post_id == models.POST.id, isouter=True).group_by(models.POST.id).filter(
+            models.POST.id == id).first().all()
     
 
     # cursor.execute("""SELECT * from posts WHERE id = %s """,(str(id)))

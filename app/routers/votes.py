@@ -13,6 +13,12 @@ router = APIRouter(
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def getvotes(vote: schema.Vote, db: Session = Depends(get_db), currentuser: str = Depends(oauth2.getcurrentuser)):
+
+
+
+    post = db.query(models.POST).filter(models.POST.id == vote.post_id).first()
+    if not post:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"post not founded {vote.post_id} deos not exist")
     vote_query = db.query(models.Votes).filter(models.Votes.post_id == vote.post_id, models.Votes.user_id == currentuser.id)
     found_vote = vote_query.first()
     

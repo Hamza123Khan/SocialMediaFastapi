@@ -4,12 +4,6 @@ from typing import Optional
 from pydantic.types import conint
 
 
-
-
-class Vote(BaseModel):
-    post_id: int
-    dir: conint(le=1) # type: ignore
-
 class userout(BaseModel):
     id:int
     username:str
@@ -40,6 +34,18 @@ class Post(PostBase):
     
     class Config:
         orm_mode = True
+
+class PostOut(PostBase):
+
+    Post: Post
+    # id: int
+    # user_id: int
+    # user: userout
+    votes:int
+
+    class Config:
+        orm_mode = True
+
 class create_users(BaseModel):
     username: str
     email: EmailStr
@@ -55,3 +61,7 @@ class Tokkendata(BaseModel):
     id: Optional[str] = None
 
 
+
+class Vote(BaseModel):
+    post_id: int
+    dir: conint(le=1) # type: ignore
