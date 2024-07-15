@@ -20,6 +20,7 @@ def testpost(db: Session = Depends(get_db)):
     return {"status": test_db}
 
 
+
 @router.get("/", response_model=list[schema.PostOut])
 def get_posts(db: Session = Depends(get_db), currentuser: int =  Depends(oauth2.getcurrentuser),
                limitposts : int = 10, search: Optional[str] = ""):
